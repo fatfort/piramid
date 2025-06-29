@@ -28,9 +28,8 @@ services:
     restart: unless-stopped
     command: [
       "--jetstream", 
-      "--store_dir=/data", 
-      "--max_mem=1G", 
-      "--max_file=10G"
+      "--store_dir=/data",
+      "-m", "8222"
     ]
     volumes:
       - nats_data:/data
@@ -38,7 +37,7 @@ services:
       - "4222:4222"
       - "8222:8222"  # HTTP monitoring
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8222/varz || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 4222 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -52,7 +51,7 @@ services:
       dockerfile: deploy/Dockerfile.api
     restart: unless-stopped
     environment:
-      - PORT=65605
+      - PORT=8080
       - DATABASE_URL=postgres://piramid:${POSTGRES_PASSWORD:-piramid123}@postgres:5432/piramid?sslmode=disable
       - NATS_URL=nats://nats:4222
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
@@ -60,7 +59,7 @@ services:
       - GEOIP_DB_PATH=/usr/share/GeoIP/GeoLite2-City.mmdb
       - HOME_NET=${HOME_NET:-any}
     ports:
-      - "65605:65605"
+      - "8001:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,7 +68,7 @@ services:
     volumes:
       - geoip_data:/usr/share/GeoIP:ro
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:65605/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -78,12 +77,12 @@ services:
 
   # Frontend
   frontend:
-    build:
-      context: ../web
-      dockerfile: ../deploy/Dockerfile.frontend
+    image: nginx:1.25-alpine
     restart: unless-stopped
     ports:
-      - "5173:80"
+      - "8080:80"
+    volumes:
+      - ../web/dist:/usr/share/nginx/html:ro
     depends_on:
       - api
     networks:

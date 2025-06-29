@@ -26,8 +26,8 @@ dev:
 	@make seed
 	@echo ""
 	@echo "✅ PIRAMID is ready!"
-	@echo "🌐 Dashboard: http://localhost:65605"
-	@echo "📊 API: http://localhost:65605/health"
+	@echo "🌐 Dashboard: http://localhost:8001"
+	@echo "📊 API: http://localhost:8001/health"
 	@echo "📈 Grafana: http://localhost:3000 (admin/admin)"
 	@echo ""
 	@echo "Demo credentials:"
@@ -44,7 +44,7 @@ prod:
 	@make seed
 	@echo ""
 	@echo "✅ PIRAMID production environment is ready!"
-	@echo "🌐 Dashboard: http://localhost:65605"
+	@echo "🌐 Dashboard: http://localhost:8001"
 	@echo "📊 Grafana: http://localhost:3000"
 	@echo "🔍 Traefik: http://localhost:8080"
 
@@ -123,7 +123,7 @@ security:
 perf:
 	@echo "Running performance tests..."
 	@command -v ab >/dev/null 2>&1 || (echo "Please install apache2-utils for performance testing" && exit 1)
-	ab -n 1000 -c 10 http://localhost:65605/health
+	ab -n 1000 -c 10 http://localhost:67546/health
 
 # Update GeoIP database
 update-geoip:

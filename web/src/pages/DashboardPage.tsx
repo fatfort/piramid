@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react'
 import { 
   Activity, 
   AlertTriangle, 
-  Shield, 
   Globe, 
   TrendingUp,
   Clock,
   Ban
 } from 'lucide-react'
-import { WorldMap } from '../components/WorldMap'
-import { EventsChart } from '../components/EventsChart'
-import { RecentEvents } from '../components/RecentEvents'
+import WorldMap from '../components/WorldMap'
+import EventsChart from '../components/EventsChart'
+import RecentEvents from '../components/RecentEvents'
 
 interface Stats {
   total_events: number
@@ -156,7 +155,7 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold text-gray-900">Threat Origins</h2>
             <Globe className="h-5 w-5 text-gray-400" />
           </div>
-          <WorldMap data={stats?.top_countries || []} />
+          <WorldMap />
         </div>
 
         {/* Events Chart */}

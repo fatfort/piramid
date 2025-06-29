@@ -106,7 +106,7 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	tenantID := getTenantIDFromContext(r)
+	_ = getTenantIDFromContext(r) // TODO: Use for tenant-specific filtering
 
 	// Create a context for the SSE connection
 	ctx, cancel := context.WithCancel(r.Context())
