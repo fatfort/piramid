@@ -68,8 +68,8 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    tokenString,
 		HttpOnly: true,
-		Secure:   s.cfg.Environment == "production",
-		SameSite: http.SameSiteStrictMode,
+		Secure:   false, // Allow over HTTP for now
+		SameSite: http.SameSiteLaxMode, // Changed to Lax for better compatibility
 		MaxAge:   24 * 60 * 60, // 24 hours
 		Path:     "/",
 	})
@@ -87,8 +87,8 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 		Name:     "auth_token",
 		Value:    "",
 		HttpOnly: true,
-		Secure:   s.cfg.Environment == "production",
-		SameSite: http.SameSiteStrictMode,
+		Secure:   false, // Allow over HTTP for now
+		SameSite: http.SameSiteLaxMode, // Changed to Lax for better compatibility
 		MaxAge:   -1,
 		Path:     "/",
 	})
