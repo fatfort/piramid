@@ -1,134 +1,112 @@
-.PHONY: help dev prod build test clean install seed logs stop restart
+.PHONY: help setup start stop restart logs clean build test dev create-user
 
 # Default target
-help:
-	@echo "PIRAMID - Predictive Intrusion Detection System"
+help: ## Show this help message
+	@echo "PIRAMID - Network IDS Management Commands"
+	@echo "========================================"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+setup: ## Setup environment and configuration files
+	@echo "🔧 Setting up PIRAMID environment..."
+	@if [ ! -f .env ]; then \
+		echo "📄 Creating .env file from template..."; \
+		cp .env.example .env; \
+		echo "⚠️  Please edit .env file with your configuration!"; \
+		echo "⚠️  At minimum, change: POSTGRES_PASSWORD, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD"; \
+	else \
+		echo "✅ .env file already exists"; \
+	fi
+	@chmod +x scripts/*.sh
+
+start: ## Start all services
+	@echo "🚀 Starting PIRAMID system..."
+	@./scripts/start.sh
+
+stop: ## Stop all services
+	@echo "🛑 Stopping PIRAMID system..."
+	@docker compose -f deploy/docker-compose.yml down
+
+restart: stop start ## Restart all services
+
+logs: ## View logs from all services
+	@docker compose -f deploy/docker-compose.yml logs -f
+
+logs-api: ## View API logs only
+	@docker compose -f deploy/docker-compose.yml logs -f api
+
+logs-db: ## View database logs only
+	@docker compose -f deploy/docker-compose.yml logs -f postgres
+
+status: ## Show status of all services
+	@echo "📊 Service Status:"
+	@docker compose -f deploy/docker-compose.yml ps
 	@echo ""
-	@echo "Available commands:"
-	@echo "  make dev        - Start development environment"
-	@echo "  make prod       - Start production environment"
-	@echo "  make build      - Build all Docker images"
-	@echo "  make test       - Run all tests"
-	@echo "  make clean      - Clean up containers and volumes"
-	@echo "  make install    - Install dependencies"
-	@echo "  make seed       - Seed the database with initial data"
-	@echo "  make logs       - Show logs from all services"
-	@echo "  make stop       - Stop all services"
-	@echo "  make restart    - Restart all services"
+	@echo "🏥 Health Check:"
+	@curl -s http://localhost:8080/health | jq . || echo "❌ API not responding"
 
-# Development environment
-dev:
-	@echo "Starting PIRAMID development environment..."
-	@cp .env.example .env 2>/dev/null || true
-	docker compose -f deploy/docker-compose.yml up --build -d postgres nats api frontend
-	@echo "Waiting for services to be ready..."
-	@sleep 10
-	@make seed
-	@echo ""
-	@echo "✅ PIRAMID is ready!"
-	@echo "🌐 Dashboard: http://localhost:8001"
-	@echo "📊 API: http://localhost:8001/health"
-	@echo "📈 Grafana: http://localhost:3000 (admin/admin)"
-	@echo ""
-	@echo "Demo credentials:"
-	@echo "  Admin: admin@fatfort.local / admin123"
-	@echo "  User:  user@fatfort.local / user123"
+clean: ## Stop services and remove volumes (destructive!)
+	@echo "🧹 Cleaning up PIRAMID system..."
+	@read -p "This will delete all data. Are you sure? (y/N) " -n 1 -r; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo ""; \
+		docker compose -f deploy/docker-compose.yml down -v; \
+		docker system prune -f; \
+		echo "✅ Cleanup completed"; \
+	else \
+		echo ""; \
+		echo "❌ Cleanup cancelled"; \
+	fi
 
-# Production environment with monitoring
-prod:
-	@echo "Starting PIRAMID production environment..."
-	@cp .env.example .env 2>/dev/null || true
-	docker compose -f deploy/docker-compose.yml --profile production --profile observability up --build -d
-	@echo "Waiting for services to be ready..."
-	@sleep 15
-	@make seed
-	@echo ""
-	@echo "✅ PIRAMID production environment is ready!"
-	@echo "🌐 Dashboard: http://localhost:8001"
-	@echo "📊 Grafana: http://localhost:3000"
-	@echo "🔍 Traefik: http://localhost:8080"
+create-user: ## Create admin user account
+	@echo "👤 Creating admin user..."
+	@./scripts/create-admin-user.sh
 
-# Build all images
-build:
-	@echo "Building PIRAMID Docker images..."
-	docker compose -f deploy/docker-compose.yml build
+build: ## Build Docker images
+	@echo "🏗️  Building Docker images..."
+	@docker build -f deploy/Dockerfile.api -t piramid-api .
+	@docker build -f deploy/Dockerfile.eve2nats -t piramid-eve2nats .
 
-# Run tests
-test:
-	@echo "Running Go tests..."
-	go test ./...
-	@echo "Running frontend tests..."
-	cd web && npm test 2>/dev/null || echo "Frontend tests not configured"
+dev: ## Start development environment (core services only)
+	@echo "🚀 Starting development environment..."
+	@docker compose -f deploy/docker-compose.yml up -d postgres nats
+	@echo "✅ Core services started (postgres, nats)"
+	@echo "💡 Run 'go run cmd/api/main.go' to start API locally"
+	@echo "💡 Run 'cd web && npm run dev' to start frontend locally"
 
-# Install dependencies
-install:
-	@echo "Installing Go dependencies..."
-	go mod tidy
-	@echo "Installing frontend dependencies..."
-	cd web && npm install
+test: ## Run tests
+	@echo "🧪 Running tests..."
+	@go test ./...
 
-# Seed database
-seed:
-	@echo "Seeding database..."
-	docker compose -f deploy/docker-compose.yml exec -T api ./seed || \
-	docker run --rm --network piramid_piramid-network \
-		-e DATABASE_URL=postgres://piramid:piramid123@postgres:5432/piramid?sslmode=disable \
-		piramid-api ./seed
+production: ## Start production environment with all services
+	@echo "🏭 Starting production environment..."
+	@docker compose -f deploy/docker-compose.yml --profile production up -d
 
-# Show logs
-logs:
-	docker compose -f deploy/docker-compose.yml logs -f
+observability: ## Start with observability (Grafana)
+	@echo "📊 Starting with observability stack..."
+	@docker compose -f deploy/docker-compose.yml --profile observability up -d
 
-# Stop all services
-stop:
-	docker compose -f deploy/docker-compose.yml --profile production --profile observability down
+# Database management
+db-reset: ## Reset database (destructive!)
+	@echo "🗄️  Resetting database..."
+	@read -p "This will delete all database data. Are you sure? (y/N) " -n 1 -r; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		echo ""; \
+		docker compose -f deploy/docker-compose.yml stop postgres; \
+		docker compose -f deploy/docker-compose.yml rm -f postgres; \
+		docker volume rm deploy_postgres_data || true; \
+		docker compose -f deploy/docker-compose.yml up -d postgres; \
+		echo "✅ Database reset completed"; \
+	else \
+		echo ""; \
+		echo "❌ Database reset cancelled"; \
+	fi
 
-# Restart services
-restart: stop
-	@make dev
-
-# Clean up everything
-clean:
-	@echo "Cleaning up PIRAMID environment..."
-	docker compose -f deploy/docker-compose.yml --profile production --profile observability down -v
-	docker system prune -f
-	@echo "Cleanup complete!"
-
-# Database migrations
-migrate:
-	@echo "Running database migrations..."
-	docker compose -f deploy/docker-compose.yml exec api ./seed
-
-# Backup database
-backup:
-	@echo "Creating database backup..."
+db-backup: ## Backup database
+	@echo "💾 Creating database backup..."
 	@mkdir -p backups
-	docker compose -f deploy/docker-compose.yml exec postgres pg_dump -U piramid piramid > backups/piramid-$(shell date +%Y%m%d-%H%M%S).sql
-	@echo "Backup created in backups/ directory"
+	@docker compose -f deploy/docker-compose.yml exec postgres pg_dump -U piramid piramid > backups/piramid_$(shell date +%Y%m%d_%H%M%S).sql
+	@echo "✅ Backup created in backups/ directory"
 
-# Restore database
-restore:
-	@echo "Usage: make restore BACKUP_FILE=backups/piramid-YYYYMMDD-HHMMSS.sql"
-	@test -n "$(BACKUP_FILE)" || (echo "Please specify BACKUP_FILE=<path_to_backup>" && exit 1)
-	docker compose -f deploy/docker-compose.yml exec -T postgres psql -U piramid -d piramid < $(BACKUP_FILE)
-
-# Security scan
-security:
-	@echo "Running security scans..."
-	@command -v trivy >/dev/null 2>&1 || (echo "Please install trivy for security scanning" && exit 1)
-	trivy image piramid-api
-	trivy image piramid-frontend
-
-# Performance test
-perf:
-	@echo "Running performance tests..."
-	@command -v ab >/dev/null 2>&1 || (echo "Please install apache2-utils for performance testing" && exit 1)
-	ab -n 1000 -c 10 http://localhost:67546/health
-
-# Update GeoIP database
-update-geoip:
-	@echo "Updating GeoIP database..."
-	@test -n "$(GEOIP_LICENSE_KEY)" || (echo "Please set GEOIP_LICENSE_KEY environment variable" && exit 1)
-	curl -o /tmp/GeoLite2-City.tar.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=$(GEOIP_LICENSE_KEY)&suffix=tar.gz"
-	docker volume create piramid_geoip_data
-	docker run --rm -v piramid_geoip_data:/data -v /tmp:/tmp alpine tar -xzf /tmp/GeoLite2-City.tar.gz -C /data --strip-components=1 
+# Quick commands
+quick-start: setup start ## Setup and start in one command
+quick-clean: clean setup ## Clean and setup in one command 
