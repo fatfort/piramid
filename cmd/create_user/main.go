@@ -50,7 +50,7 @@ func main() {
 	// Get admin credentials from environment variables
 	adminEmail := os.Getenv("ADMIN_EMAIL")
 	if adminEmail == "" {
-		adminEmail = "admin@piramid.local"
+		adminEmail = "admin@fatfort.com"
 		log.Printf("ADMIN_EMAIL not set, using default: %s", adminEmail)
 	}
 

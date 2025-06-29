@@ -84,7 +84,7 @@ func main() {
 			}
 
 			// Parse the event
-			// Default to tenant ID 1 for now (fatfort-internal)
+			// Default to tenant ID 1 for now (production-tenant)
 			tenantID := uint(1)
 			parsedEvent, err := parser.ParseEvent(line, tenantID)
 			if err != nil {

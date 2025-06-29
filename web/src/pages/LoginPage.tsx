@@ -113,15 +113,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="text-sm text-gray-600">
-              <p className="mb-2">Demo credentials:</p>
-              <div className="bg-gray-50 p-3 rounded-lg space-y-1">
-                <p><strong>Admin:</strong> admin@fatfort.local / admin123</p>
-                <p><strong>User:</strong> user@fatfort.local / user123</p>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

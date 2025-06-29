@@ -46,7 +46,7 @@ cd piramid
 make dev
 
 # Access dashboard at http://localhost:65605
-# Login: admin@fatfort.local / admin123
+# Login: admin@piramid.local / admin123
 ```
 
 ## 📁 Repository Structure

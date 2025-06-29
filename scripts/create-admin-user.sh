@@ -9,14 +9,14 @@ else
 fi
 
 echo "Creating admin user account..."
-echo "Email: ${ADMIN_EMAIL:-admin@piramid.local}"
+echo "Email: ${ADMIN_EMAIL:-admin@fatfort.com}"
 
 # Create the user using the Go program in a Docker container
 docker run --rm \
     --network deploy_piramid-network \
     -e DATABASE_URL="postgres://piramid:${POSTGRES_PASSWORD:-piramid-db-secure-2024}@postgres:5432/piramid?sslmode=disable" \
     -e HOME_NET="${HOME_NET:-any}" \
-    -e ADMIN_EMAIL="${ADMIN_EMAIL:-admin@piramid.local}" \
+    -e ADMIN_EMAIL="${ADMIN_EMAIL:-admin@fatfort.com}" \
     -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-piramid-admin-2024}" \
     -v $(pwd):/app \
     -w /app \
@@ -27,5 +27,5 @@ echo ""
 echo "Admin user created successfully!"
 echo ""
 echo "You can now log in at: http://localhost:8080"
-echo "Email: ${ADMIN_EMAIL:-admin@piramid.local}"
+echo "Email: ${ADMIN_EMAIL:-admin@fatfort.com}"
 echo "Password: [as configured in .env file]" 

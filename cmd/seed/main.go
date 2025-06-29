@@ -28,8 +28,8 @@ func main() {
 
 	// Create default tenant
 	tenant := &database.Tenant{
-		Name:        "fatfort-internal",
-		Description: "Default internal tenant for PIRAMID system",
+		Name:        "production-tenant",
+		Description: "Default tenant for PIRAMID system",
 		HomeNet:     cfg.HomeNet,
 	}
 
@@ -55,7 +55,7 @@ func main() {
 
 	user := &database.User{
 		TenantID:     tenant.ID,
-		Email:        "admin@fatfort.local",
+		Email:        "admin@piramid.local",
 		PasswordHash: string(hashedPassword),
 		Role:         "admin",
 		Active:       true,
@@ -82,7 +82,7 @@ func main() {
 
 	regularUser := &database.User{
 		TenantID:     tenant.ID,
-		Email:        "user@fatfort.local",
+		Email:        "user@piramid.local",
 		PasswordHash: string(hashedRegularPassword),
 		Role:         "user",
 		Active:       true,
@@ -100,6 +100,6 @@ func main() {
 
 	log.Println("Database seeding completed successfully!")
 	log.Println("You can now login with:")
-	log.Printf("  Admin: admin@fatfort.local / admin123")
-	log.Printf("  User:  user@fatfort.local / user123")
+	log.Printf("  Admin: admin@piramid.local / admin123")
+	log.Printf("  User:  user@piramid.local / user123")
 }
